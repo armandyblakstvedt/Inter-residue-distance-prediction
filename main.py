@@ -7,9 +7,10 @@ from torch.utils.data import DataLoader
 from model import Model
 from utils.losses import MaskedMSELoss
 
-EPOCHS = 10
+EPOCHS = 20
 
 NUMBER_OF_BATCHES_PER_EPOCH = None
+BATCH_SIZE = 8
 
 
 def train(model, dataloader, criterion, optimizer, scaler_grad):
@@ -99,7 +100,7 @@ if __name__ == '__main__':
     dataset = ProteinDataset(data)
     validation_dataset = ProteinDataset(test_data)
 
-    dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
     validation_dataloader = DataLoader(validation_dataset, batch_size=1, shuffle=False)
 
     model = Model()
