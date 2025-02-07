@@ -56,39 +56,40 @@ def load_data():
             sequence = sequence + ['Ø'] * (400 - n)
             # Create a 400x400 matrix filled with NaN and copy original distances
             padded_dm = np.full((400, 400), np.nan)
-            if n > 0:
-                padded_dm[:n, :n] = distance_map
+            padded_dm[:n, :n] = distance_map
             distance_map = padded_dm
 
         # Append the joined sequence string and its corresponding distance map
-        sequences.append(["".join(sequence), distance_map])
-        print(["".join(sequence), distance_map]) if len(sequence) < 400 else None
+        sequences.append([sequence, distance_map])
 
-    return sequences
+    return sequences.copy()
 
 
 if __name__ == '__main__':
     data = load_data()
 
-    # # Initialize the first image
-    # current_idx = [0]  # Using a list to allow modifications in the inner function
+    # (sequence, distances)[]
+    # print(data[0][1])
 
-    # fig, ax = plt.subplots()
-    # img = ax.imshow(data[current_idx[0]][1])
-    # plt.colorbar(img)
+    # Initialize the first image
+    current_idx = [0]  # Using a list to allow modifications in the inner function
 
-    # def on_key(event):
-    #     if event.key == 'right':
-    #         current_idx[0] = (current_idx[0] + 1) % len(data)
-    #     elif event.key == 'left':
-    #         current_idx[0] = (current_idx[0] - 1) % len(data)
-    #     else:
-    #         return
-    #     # Update image data and redraw
-    #     img.set_data(data[current_idx[0]][1])
-    #     ax.set_title(f"Map {current_idx[0]+1}/{len(data)}")
-    #     fig.canvas.draw_idle()
+    fig, ax = plt.subplots()
+    img = ax.imshow(data[current_idx[0]][1])
+    plt.colorbar(img)
 
-    # fig.canvas.mpl_connect('key_press_event', on_key)
-    # ax.set_title(f"Map {current_idx[0]+1}/{len(data)}")
-    # plt.show()
+    def on_key(event):
+        if event.key == 'right':
+            current_idx[0] = (current_idx[0] + 1) % len(data)
+        elif event.key == 'left':
+            current_idx[0] = (current_idx[0] - 1) % len(data)
+        else:
+            return
+        # Update image data and redraw
+        img.set_data(data[current_idx[0]][1])
+        ax.set_title(f"Map {current_idx[0]+1}/{len(data)}")
+        fig.canvas.draw_idle()
+
+    fig.canvas.mpl_connect('key_press_event', on_key)
+    ax.set_title(f"Map {current_idx[0]+1}/{len(data)}")
+    plt.show()
