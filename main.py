@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from model import Model
 from utils.losses import MaskedMSELoss
 
-EPOCHS = 20
+EPOCHS = 50
 
 NUMBER_OF_BATCHES_PER_EPOCH = None
 BATCH_SIZE = 8
@@ -18,7 +18,7 @@ def train(model, dataloader, criterion, optimizer, scaler_grad):
 
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     # Another scheduler that can be used is ReduceLROnPlateau
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=15)
 
     for epoch in tqdm.tqdm(range(EPOCHS), desc='Epochs', unit='epoch'):
         running_loss = 0.0
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     one_hot_encoded_data = []
     for protein_sequence, distance_matrix in data:
         # Create a tensor filled with zeros of shape (400, num_amino_acids)
-        one_hot = torch.zeros(len(protein_sequence), num_unique_amino_acids)
+        one_hot = torch.zeros(len(protein_sequence), num_unique_amino_acids, dtype=torch.float32).to(device='mps')
         for i, aa in enumerate(protein_sequence):
             one_hot[i, aa_to_index[aa]] = 1
         # Flatten the one hot tensor to get a vector of length num_amino_acids * 400
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
     validation_dataloader = DataLoader(validation_dataset, batch_size=1, shuffle=False)
 
-    model = Model()
+    model = Model().to(device='mps')
 
     # criterion = torch.nn.MSELoss()
 

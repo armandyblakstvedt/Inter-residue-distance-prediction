@@ -18,7 +18,7 @@ class ProteinDataset(Dataset):
         # If x does not have 10800 elements, you'll need to pad or chop it.
         x = x.view(1, -1)
         # Make Y a torch tensor
-        y = torch.tensor(y, dtype=torch.float32)
+        y = torch.tensor(y, dtype=torch.float32, device='mps')
         # Flatten Y
         y = y.view(-1)
         return x, y
