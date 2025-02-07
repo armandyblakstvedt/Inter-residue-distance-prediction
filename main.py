@@ -10,7 +10,7 @@ import os
 from utils.visualize import visualize_distances
 import numpy as np
 
-EPOCHS = 30
+EPOCHS = 10
 
 NUMBER_OF_BATCHES_PER_EPOCH = None
 BATCH_SIZE = 8
@@ -100,7 +100,7 @@ if __name__ == '__main__':
     train_data = data[:int(0.8 * len(data))]
     test_data = data[int(0.8 * len(data)):]
 
-    dataset = ProteinDataset(data)
+    dataset = ProteinDataset(train_data)
     validation_dataset = ProteinDataset(test_data)
 
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
@@ -138,7 +138,7 @@ if __name__ == '__main__':
 
     # For each prediction in validation_predictions (numpy ndarray), split it up into a 2d array of shape (400, 400)
     validation_predictions = [np.reshape(pred, (400, 400)) for pred in validation_predictions]
-    
+
     # Save the validation predictions to a file
     predictions_dir = os.path.abspath('./predictions')
     os.makedirs(predictions_dir, exist_ok=True)
