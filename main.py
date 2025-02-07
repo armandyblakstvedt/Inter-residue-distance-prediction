@@ -6,8 +6,11 @@ from ProteinDataset import ProteinDataset
 from torch.utils.data import DataLoader
 from model import Model
 from utils.losses import MaskedMSELoss
+import os
+from utils.visualize import visualize_distances
+import numpy as np
 
-EPOCHS = 50
+EPOCHS = 30
 
 NUMBER_OF_BATCHES_PER_EPOCH = None
 BATCH_SIZE = 8
@@ -119,6 +122,8 @@ if __name__ == '__main__':
     validation_loss = 0.0
     num_batches = 0
 
+    validation_predictions = []
+
     model.eval()
     with torch.no_grad():
         for batch_idx, (data, target) in enumerate(validation_dataloader):
@@ -129,6 +134,18 @@ if __name__ == '__main__':
             loss = criterion(output, target)
             validation_loss += loss.item()
             num_batches += 1
+            validation_predictions.append(output.cpu().numpy())
+
+    # For each prediction in validation_predictions (numpy ndarray), split it up into a 2d array of shape (400, 400)
+    validation_predictions = [np.reshape(pred, (400, 400)) for pred in validation_predictions]
+    
+    # Save the validation predictions to a file
+    predictions_dir = os.path.abspath('./predictions')
+    os.makedirs(predictions_dir, exist_ok=True)
+    save_path = os.path.join(predictions_dir, "validation_predictions.txt")
+    with open(save_path, 'w') as f:
+        for pred in validation_predictions:
+            f.write(str(pred.tolist()) + "\n")
 
     if num_batches > 0:
         validation_loss /= num_batches
@@ -136,3 +153,5 @@ if __name__ == '__main__':
         validation_loss = float('nan')
 
     print(f"Validation Loss: {validation_loss:.4f}")
+
+    visualize_distances(validation_predictions)
