@@ -2,8 +2,6 @@ import torch
 import tqdm
 from torch.amp import autocast
 from utils.load_data import load_data
-from utils.one_hot_encode import one_hot_encode
-from sklearn.preprocessing import MinMaxScaler
 from ProteinDataset import ProteinDataset
 from torch.utils.data import DataLoader
 from model import Model
@@ -67,18 +65,41 @@ if __name__ == '__main__':
     for seq, _ in data:
         all_amino_acids.update(seq)
 
-    # One hot encode the protein sequence
-    # the data is a tuple of (protein_sequence, target)
-    # the protein_sequence is a string of amino acids
-    # the target is a inter-residue distance matrix
-    # the target is a 2D numpy array
-    data = [(one_hot_encode(seq, all_amino_acids), target) for seq, target in data]
+    # Convert the set to a list and sort for consistent order
+    all_amino_acids = sorted(list(all_amino_acids))
+
+    # Create a mapping from amino acid to index
+    aa_to_index = {aa: idx for idx, aa in enumerate(all_amino_acids)}
+    num_amino_acids = len(all_amino_acids)
+
+    # One hot encode the data
+    one_hot_encoded_data = []
+    for seq, target in data:
+        # If target is longer than 400, truncate it
+        if len(seq) > 400:
+            print(len(seq))
+            exit(0)
+        # Create a tensor filled with zeros of shape (400, num_amino_acids)
+        one_hot = torch.zeros(len(seq), num_amino_acids)
+        for i, aa in enumerate(seq):
+            one_hot[i, aa_to_index[aa]] = 1
+        # Flatten the one hot tensor to get a vector of length num_amino_acids * 400
+        one_hot = one_hot.view(-1)
+        one_hot_encoded_data.append((one_hot, target))
+
+    print(num_amino_acids)
+
+    print(one_hot_encoded_data[0][0].shape)
+
+    exit(0)
+
+    data = one_hot_encoded_data
 
     dataset = ProteinDataset(data)
 
     dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 
-    model = Model()
+    model = Model(400 * 400)
 
     criterion = torch.nn.MSELoss()
 

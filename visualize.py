@@ -2,8 +2,9 @@ import glob
 from Bio.PDB import PDBParser
 import numpy as np
 
+
 # Use glob to get all .pdb files in pdb_files/ directory
-pdb_files = glob.glob("pdb_files/*.pdb")
+pdb_files = glob.glob("data/*.pdb")
 parser = PDBParser()
 
 # Iterate over each PDB file
