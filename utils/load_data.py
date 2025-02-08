@@ -7,6 +7,7 @@ import warnings
 from Bio.PDB.PDBExceptions import PDBConstructionWarning
 import matplotlib.pyplot as plt
 from concurrent.futures import ProcessPoolExecutor
+from tqdm import tqdm
 
 warnings.simplefilter('ignore', PDBConstructionWarning)
 parser = PDBParser()
@@ -61,7 +62,7 @@ def load_data():
     pdb_files = glob.glob("data/*.pdb")
     sequences = []
     with ProcessPoolExecutor() as executor:
-        results = executor.map(process_file, pdb_files)
+        results = tqdm(executor.map(process_file, pdb_files), total=len(pdb_files), desc="Processing files")
         for result in results:
             if result is not None:
                 sequences.append(result)

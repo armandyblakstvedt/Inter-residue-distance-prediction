@@ -13,10 +13,5 @@ class ProteinDataset(Dataset):
     def __getitem__(self, idx):
         x = self.data[idx][0]
         y = self.data[idx][1]
-        # Ensure correct shape: [1, 10800]
-        # If x does not have 10800 elements, you'll need to pad or chop it.
-        x = x.view(1, -1)
-        # Make Y a torch tensor
-        # Flatten Y
-        y = y.view(-1)
-        return x, y
+        valid_entries = self.data[idx][2]
+        return x, y, valid_entries
