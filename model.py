@@ -1,7 +1,7 @@
 from torch import nn
 import torch.nn.functional as F
 
-# 1D CNN model adjusted for 10800 inputs -> 160000 outputs
+# 1D CNN model adjusted for 10800 inputs -> 80200 outputs
 
 
 class Model(nn.Module):
@@ -34,11 +34,11 @@ class Model(nn.Module):
         x = self.relu(x)
         x = self.maxpool(x)  # after four poolings, length becomes 10800/16=675
 
-        # Upsample from length 675 to 160000
-        x = F.interpolate(x, size=160000, mode='linear', align_corners=False)
+        # Upsample from length 675 to 80200
+        x = F.interpolate(x, size=80200, mode='linear', align_corners=False)
         # Collapse channel dimension with a convolution
-        x = self.conv_output(x)  # now shape: [batch, 1, 160000]
-        # Flatten to [batch, 160000]
+        x = self.conv_output(x)  # now shape: [batch, 1, 80200]
+        # Flatten to [batch, 80200]
         x = F.leaky_relu(x)
         x = x.view(x.size(0), -1)
         return x
