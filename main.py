@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 from torch.amp import autocast
 from utils.load_data import load_data, load_cached_data
 from ProteinDataset import ProteinDataset
@@ -18,10 +19,10 @@ plt.ion()
 DEVICE = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
 
 # Training parameters
-EPOCHS = 100
+EPOCHS = 500
 NUMBER_OF_BATCHES_PER_EPOCH = 1000
 BATCH_SIZE = 8
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.0001
 
 # Early stopping parameters
 EARLY_STOPPING_PATIENCE = 100
@@ -53,7 +54,8 @@ def train(model, train_dataloader, val_dataloader, criterion, optimizer, scaler_
     best_val_loss = float('inf')
     epochs_no_improve = 0
 
-    for epoch in tqdm(range(EPOCHS), desc='Epochs', unit='epoch'):
+    progress_bar = tqdm(range(EPOCHS), desc='Training', unit='epoch')
+    for epoch in progress_bar:
         model.train()
         running_loss = 0.0
         num_train_batches = 0
@@ -99,17 +101,7 @@ def train(model, train_dataloader, val_dataloader, criterion, optimizer, scaler_
         else:
             val_loss = float('nan')
 
-        print(f"Epoch {epoch+1}/{EPOCHS}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
-
-        # Live visualization using one sample from the validation set.
-        sample_data, sample_target, sample_valid = next(iter(val_dataloader))
-        # Run a forward pass on the sample
-        with torch.no_grad():
-            sample_pred = model(sample_data)
-        # Use the full predicted and target matrices directly.
-        pred_matrix = sample_pred[0, 0].cpu().numpy()
-        target_matrix = sample_target[0].cpu().numpy()
-        live_visualize(pred_matrix, target_matrix)
+        progress_bar.set_description(f"Training | loss: {train_loss:.4f} | Val loss: {val_loss:.4f}")
 
         # Check for improvement for early stopping (using validation loss)
         if val_loss < best_val_loss:
@@ -128,8 +120,6 @@ def train(model, train_dataloader, val_dataloader, criterion, optimizer, scaler_
 
 if __name__ == '__main__':
     data = load_data()
-
-    print(data)
 
     # Extract all the unique amino acids in the dataset
     all_amino_acids = set()
@@ -183,8 +173,36 @@ if __name__ == '__main__':
 
     model = Model(
         input_channels=2 * num_unique_amino_acids,
-    ).to(device=DEVICE)
+    )
+
+    model = nn.DataParallel(model)
+
+    model.to(DEVICE)
+
     criterion = MaskedMSELoss()
     optimizer = OPTIMIZER(model.parameters(), lr=LEARNING_RATE)
 
     train(model, train_dataloader, validation_dataloader, criterion, optimizer, SCALER_GRAD)
+
+    # Disable interactive mode for saving a static plot.
+    plt.ioff()
+
+    # Get one sample from the validation set.
+    sample_data, sample_target, sample_valid = next(iter(validation_dataloader))
+    with torch.no_grad():
+        sample_pred = model(sample_data)
+
+    # Convert tensors to numpy arrays.
+    pred_matrix = sample_pred[0, 0].cpu().numpy()
+    target_matrix = sample_target[0].cpu().numpy()
+
+    # Create a new figure.
+    fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+    axs[0].set_title("Prediction")
+    axs[0].imshow(pred_matrix, cmap='viridis')
+    axs[1].set_title("Target")
+    axs[1].imshow(target_matrix, cmap='viridis')
+
+    # Save the plot to an image file.
+    fig.savefig("plots/validation_sample_plot.png")
+    print("Plot saved as 'validation_sample_plot.png'")
