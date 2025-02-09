@@ -160,10 +160,8 @@ if __name__ == '__main__':
 
     data = full_matrix_data
 
-    train_data = data
-    test_data = data
-    # train_data = data[:int(0.8 * len(data))]
-    # test_data = data[int(0.8 * len(data)):]
+    train_data = data[:int(0.8 * len(data))]
+    test_data = data[int(0.8 * len(data)):]
 
     dataset = ProteinDataset(train_data)
     validation_dataset = ProteinDataset(test_data)
