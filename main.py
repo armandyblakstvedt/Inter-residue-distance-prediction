@@ -1,6 +1,6 @@
 import torch
 from torch.amp import autocast
-from utils.load_data import load_data, load_cached_data, reconstruct_symmetric_matrix
+from utils.load_data import load_data, load_cached_data
 from ProteinDataset import ProteinDataset
 from torch.utils.data import DataLoader
 from model import Model
@@ -18,13 +18,13 @@ plt.ion()
 DEVICE = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
 
 # Training parameters
-EPOCHS = 10
+EPOCHS = 100
 NUMBER_OF_BATCHES_PER_EPOCH = 1000
 BATCH_SIZE = 8
 LEARNING_RATE = 0.001
 
 # Early stopping parameters
-EARLY_STOPPING_PATIENCE = 5
+EARLY_STOPPING_PATIENCE = 100
 
 # Training options
 OPTIMIZER = torch.optim.Adam
@@ -106,14 +106,9 @@ def train(model, train_dataloader, val_dataloader, criterion, optimizer, scaler_
         # Run a forward pass on the sample
         with torch.no_grad():
             sample_pred = model(sample_data)
-        # Assume valid_entries indicates the actual protein length.
-        n_actual = int(sample_valid.item())
-        # Crop the predicted matrix (model output has shape [batch, 1, H, W])
+        # Use the full predicted and target matrices directly.
         pred_matrix = sample_pred[0, 0].cpu().numpy()
-        pred_matrix = pred_matrix[:n_actual, :n_actual]
-        # Reconstruct the target symmetric matrix using the helper.
-        target_vector = sample_target[0].cpu().numpy()
-        target_matrix = reconstruct_symmetric_matrix(target_vector, n_actual)
+        target_matrix = sample_target[0].cpu().numpy()
         live_visualize(pred_matrix, target_matrix)
 
         # Check for improvement for early stopping (using validation loss)
@@ -132,7 +127,9 @@ def train(model, train_dataloader, val_dataloader, criterion, optimizer, scaler_
 
 
 if __name__ == '__main__':
-    data = load_cached_data()
+    data = load_data()
+
+    print(data)
 
     # Extract all the unique amino acids in the dataset
     all_amino_acids = set()
@@ -173,8 +170,10 @@ if __name__ == '__main__':
 
     data = full_matrix_data
 
-    train_data = data[:int(0.8 * len(data))]
-    test_data = data[int(0.8 * len(data)):]
+    train_data = data
+    test_data = data
+    # train_data = data[:int(0.8 * len(data))]
+    # test_data = data[int(0.8 * len(data)):]
 
     dataset = ProteinDataset(train_data)
     validation_dataset = ProteinDataset(test_data)
