@@ -96,7 +96,7 @@ def load_cached_data(DEVICE):
     cache_file = os.path.join(cache_dir, "one_hot_encoded_data.pt")
     if os.path.exists(cache_file):
         print("Loading cached one-hot encoded data...")
-        one_hot_encoded_data = torch.load(cache_file)
+        one_hot_encoded_data = torch.load(cache_file, map_location=DEVICE)
     else:
         one_hot_encoded_data = []
         for protein_sequence, distance_matrix, valid_entries in tqdm(
