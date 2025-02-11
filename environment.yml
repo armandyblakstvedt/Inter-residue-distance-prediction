@@ -1,0 +1,14 @@
+name: inter_residue_distance_prediction
+
+channel: 
+  - conda-forge
+  - defaults
+
+dependencies:
+  - numpy
+  - pytorch
+  - pandas
+  - biopython
+  - scikit-learn
+  - matplotlib
+  - tqdm
