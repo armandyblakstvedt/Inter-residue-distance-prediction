@@ -60,7 +60,7 @@ def process_file(pdb_file):
 
 
 def load_data():
-    pdb_files = glob.glob("data/*.pdb")[:4]
+    pdb_files = glob.glob("data/*.pdb")
     sequences = []
     with ProcessPoolExecutor() as executor:
         results = tqdm(executor.map(process_file, pdb_files), total=len(pdb_files), desc="Processing files")
