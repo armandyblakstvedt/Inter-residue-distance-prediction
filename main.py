@@ -1,4 +1,4 @@
-from configurations import DEVICE, BATCH_SIZE, LEARNING_RATE, EPOCHS, EARLY_STOPPING_PATIENCE, NUMBER_OF_BATCHES_PER_EPOCH, OPTIMIZER, SCALER_GRAD, SCHEDULER
+from configurations import DEVICE, BATCH_SIZE, LEARNING_RATE, EPOCHS, EARLY_STOPPING_PATIENCE, NUMBER_OF_BATCHES_PER_EPOCH, OPTIMIZER, SCALER_GRAD
 from utils.load_data import load_cached_data
 from ProteinDataset import ProteinDataset
 from torch.utils.data import DataLoader

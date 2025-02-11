@@ -3,7 +3,7 @@ from tqdm import tqdm
 from torch.amp import autocast
 
 
-def train(model, train_dataloader, val_dataloader, criterion, optimizer, scaler_grad, scheduler, epochs, number_of_batches_per_epoch=None, DEVICE, early_stopping_patience=5):
+def train(model, train_dataloader, val_dataloader, criterion, optimizer, scaler_grad, scheduler, epochs, number_of_batches_per_epoch, device, early_stopping_patience=5):
     model.train()
 
     best_val_loss = float('inf')
@@ -23,7 +23,7 @@ def train(model, train_dataloader, val_dataloader, criterion, optimizer, scaler_
                 break
 
             optimizer.zero_grad()
-            with autocast(device_type=DEVICE, dtype=torch.float32):
+            with autocast(device_type=device, dtype=torch.float32):
                 output = model(data)
                 loss = criterion(output, target)
 
@@ -48,7 +48,7 @@ def train(model, train_dataloader, val_dataloader, criterion, optimizer, scaler_
                 if number_of_batches_per_epoch is not None and batch_idx >= number_of_batches_per_epoch:
                     break
 
-                with autocast(device_type=DEVICE, dtype=torch.float32):
+                with autocast(device_type=device, dtype=torch.float32):
                     output = model(data)
                     loss = criterion(output, target)
                 val_loss += loss.item()
