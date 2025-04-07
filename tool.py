@@ -81,16 +81,19 @@ def main():
         plt.colorbar(label='Predicted Distance (Å)')
         plt.title(f"Prediction for {record.id}")
 
-        # Set axis length
-        # plt.xlim(0, width)
-        # plt.ylim(0, height)
-
-        plt.show()
-
         # Save the plot
         os.makedirs("plots", exist_ok=True)
         plt.savefig(f"plots/{record.id}_prediction.png")
+        print(f"Plot saved for {record.id} at path 'plots/{record.id}_prediction.png'")
+
+        plt.show()
         plt.close()
+
+        # Save the prediction matrix to a pickle file
+        os.makedirs("predictions", exist_ok=True)
+        with open(f"predictions/{record.id}_prediction.pkl", "wb") as f:
+            torch.save(prediction_matrix, f)
+        print(f"Prediction saved for {record.id} at path 'predictions/{record.id}_prediction.pkl'")
 
 if __name__ == "__main__":
     main()
