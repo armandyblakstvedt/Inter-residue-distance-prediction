@@ -7,15 +7,44 @@ from utils.load_data import one_hot_encode
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# Dictionary to map single-letter amino acid codes to three-letter codes
+d = {'C': 'CYS', 'D': 'ASP', 'S': 'SER', 'Q': 'GLN', 'K': 'LYS',
+     'I': 'ILE', 'P': 'PRO', 'T': 'THR', 'F': 'PHE', 'N': 'ASN',
+     'G': 'GLY', 'H': 'HIS', 'L': 'LEU', 'R': 'ARG', 'W': 'TRP',
+     'A': 'ALA', 'V': 'VAL', 'E': 'GLU', 'Y': 'TYR', 'M': 'MET'}
+
 def predict(record, model):
     # Create a ProteinDataset instance
     sequence = record.seq
 
-    data = [sequence, None, None]
+    # Throw error if the sequence is over 400 characters
+    if len(sequence) > 400:
+        raise ValueError("Sequence length exceeds 400 characters.")
+
+    # Convert the sequence of single-letter codes to a sequence of three-letter codes
+    sequence = [str(aa) for aa in sequence]
+
+    # Convert the sequence to a list of three-letter codes
+    sequence = [d[aa] for aa in sequence if aa in d]
+
+    # Add 'Ø' to the sequence until it reaches 400 characters
+    sequence += ['Ø'] * (400 - len(sequence))
+
+    data = [(sequence, torch.zeros(400, 400), 400)]
     one_hot_encoded_data, num_unique_amino_acids = one_hot_encode(data, DEVICE)
+    # one_hot_encoded_data = torch.tensor(one_hot_encoded_data, dtype=torch.float32).to(DEVICE)
+    print("One-hot encoded data shape:", one_hot_encoded_data)
+    print("Number of unique amino acids:", num_unique_amino_acids)
+
+    protein_dataset = ProteinDataset(one_hot_encoded_data, num_unique_amino_acids)
+    dataloader = torch.utils.data.DataLoader(protein_dataset, batch_size=1, shuffle=False)
+
+    # Get the first batch
+    batch = next(iter(dataloader))
+    print("Batch shape:", batch[0].shape)
 
     with torch.no_grad():
-        prediction = model()
+        prediction = model(batch)
 
 
 def read_fasta(filepath: str):
@@ -29,13 +58,15 @@ def load_model(model_path: str):
     state_dict = torch.load(model_path, map_location='cpu')
     new_state_dict = {k.replace('module.', ''): v for k, v in state_dict.items()}
     model.load_state_dict(new_state_dict)
+    return model
 
 def main():
     # Load the model
     model = load_model("model.pth")
 
-    fasta_text = input("Enter the FASTA file path: ")
-    fasta_records = read_fasta(fasta_text)
+    # Input with autocomplete for file path
+    fasta_path = input("Enter the path to the FASTA file: ")
+    fasta_records = read_fasta(fasta_path)
     for record in fasta_records:
         prediction = predict(record, model)
 

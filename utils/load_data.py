@@ -71,20 +71,42 @@ def load_data():
                 sequences.append(result)
     return sequences
 
-def get_unique_amino_acids(data, DEVICE="cpu"):
+def get_unique_amino_acids(DEVICE="cpu"):
     if os.path.exists(CACHED_UNIQUE_AMINO_ACIDS):
         print("Loading cached amino acids...")
         amino_acid_data = torch.load(CACHED_UNIQUE_AMINO_ACIDS, map_location=DEVICE)
         return amino_acid_data.get("aa_to_index"), amino_acid_data.get("num_unique_amino_acids")
 
+    # Get data based on sequences in cache
+    if os.path.exists(CACHE_FILE):
+        print("Loading cached data...")
+        with open(CACHE_FILE, 'rb') as f:
+            data = pickle.load(f)
+    else:
+        print("Cache not found. Processing data...")
+        data = load_data()
+        os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
+        with open(CACHE_FILE, 'wb') as f:
+            pickle.dump(data, f)
+
     # Extract all the unique amino acids in the dataset
+    print("Extracting unique amino acids...")
     all_amino_acids = set()
-    for seq, _, _ in data:
+    for seq, _, _ in tqdm(data, desc="Extracting unique amino acids", unit="protein"):
         for aa in seq:
             all_amino_acids.add(aa)
     all_amino_acids = sorted(list(all_amino_acids))
     aa_to_index = {aa: idx for idx, aa in enumerate(all_amino_acids)}
     num_unique_amino_acids = len(all_amino_acids)
+
+    # Save to cache
+    amino_acid_data = {
+        "aa_to_index": aa_to_index,
+        "num_unique_amino_acids": num_unique_amino_acids
+    }
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    torch.save(amino_acid_data, CACHED_UNIQUE_AMINO_ACIDS)
+    print("Unique amino acids cached.")
 
     return aa_to_index, num_unique_amino_acids
 
@@ -104,7 +126,7 @@ def one_hot_encode(data, DEVICE="cpu"):
             - n_actual: Tensor of shape (1,).
         num_unique_amino_acids: The number of unique amino acids in the dataset.
     """
-    aa_to_index, num_unique_amino_acids = get_unique_amino_acids(data, DEVICE)
+    aa_to_index, num_unique_amino_acids = get_unique_amino_acids(DEVICE)
 
     one_hot_encoded_data = []
     for protein_sequence, distance_matrix, valid_entries in tqdm(
