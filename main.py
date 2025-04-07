@@ -3,7 +3,7 @@ from utils.load_data import load_cached_data
 from ProteinDataset import ProteinDataset
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
-from utils.losses import MaskedMSELoss
+from utils.losses import MaskedMAELoss, MaskedMSELoss
 from train import train
 from model import Model
 from torch import nn
@@ -55,22 +55,49 @@ if __name__ == '__main__':
     # Disable inter pactive mode for saving a static plot.
     plt.ioff()
 
-    # Get a random sample from the validation set.
-    sample_data, sample_target, sample_valid = next(iter(validation_dataloader))
-    with torch.no_grad():
-        sample_pred = model(sample_data)
+    loss_fn = MaskedMAELoss()
+    total_loss = 0.0
+    num_samples = 0
 
-    # Convert tensors to numpy arrays.
-    pred_matrix = sample_pred[0, 0].cpu().numpy()
-    target_matrix = sample_target[0].cpu().numpy()
+    # Loop over all validation data and get the loss
+    for i, data in enumerate(validation_dataloader):
+        sequence, target, valid_entries = data
+        sequence = sequence.to(DEVICE)
+        target = target.to(DEVICE)
+        valid_entries = valid_entries.to(DEVICE)
 
-    # Create a new figure.
-    fig, axs = plt.subplots(1, 2, figsize=(12, 6))
-    axs[0].set_title("Prediction")
-    axs[0].imshow(pred_matrix, cmap='viridis')
-    axs[1].set_title("Target")
-    axs[1].imshow(target_matrix, cmap='viridis')
+        # Get the model prediction
+        with torch.no_grad():
+            prediction = model(sequence)
 
-    # Save the plot to an image file.
-    fig.savefig(f"plots/a_good_model_v2_{len(sample_data[0])}.png")
-    print("Plot saved as 'validation_sample_plot.png'")
+        # Calculate the loss
+        loss = loss_fn(prediction, target)
+
+        total_loss += loss.item()
+        num_samples += 1
+
+        print(f"Validation sample {i}: Loss: {loss.item()}")
+
+    # Calculate the average loss
+    average_loss = total_loss / num_samples
+    print(f"Average validation loss: {average_loss}")
+
+    # # Get a random sample from the validation set.
+    # sample_data, sample_target, sample_valid = next(iter(validation_dataloader))
+    # with torch.no_grad():
+    #     sample_pred = model(sample_data)
+
+    # # Convert tensors to numpy arrays.
+    # pred_matrix = sample_pred[0, 0].cpu().numpy()
+    # target_matrix = sample_target[0].cpu().numpy()
+
+    # # Create a new figure.
+    # fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+    # axs[0].set_title("Prediction")
+    # axs[0].imshow(pred_matrix, cmap='viridis')
+    # axs[1].set_title("Target")
+    # axs[1].imshow(target_matrix, cmap='viridis')
+
+    # # Save the plot to an image file.
+    # fig.savefig(f"plots/a_good_model_v2_{len(sample_data[0])}.png")
+    # print("Plot saved as 'validation_sample_plot.png'")

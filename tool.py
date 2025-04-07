@@ -1,9 +1,10 @@
 from Bio import SeqIO
 import torch
-
+import matplotlib.pyplot as plt
 from ProteinDataset import ProteinDataset
 from model import Model
 from utils.load_data import one_hot_encode
+import os
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -32,19 +33,16 @@ def predict(record, model):
 
     data = [(sequence, torch.zeros(400, 400), 400)]
     one_hot_encoded_data, num_unique_amino_acids = one_hot_encode(data, DEVICE)
-    # one_hot_encoded_data = torch.tensor(one_hot_encoded_data, dtype=torch.float32).to(DEVICE)
-    print("One-hot encoded data shape:", one_hot_encoded_data)
-    print("Number of unique amino acids:", num_unique_amino_acids)
 
     protein_dataset = ProteinDataset(one_hot_encoded_data, num_unique_amino_acids)
     dataloader = torch.utils.data.DataLoader(protein_dataset, batch_size=1, shuffle=False)
 
-    # Get the first batch
-    batch = next(iter(dataloader))
-    print("Batch shape:", batch[0].shape)
+    sample_data, _, _ = next(iter(dataloader))
 
     with torch.no_grad():
-        prediction = model(batch)
+        prediction = model(sample_data)
+
+    return prediction[0, 0].cpu().numpy()
 
 
 def read_fasta(filepath: str):
@@ -58,7 +56,7 @@ def load_model(model_path: str):
     state_dict = torch.load(model_path, map_location='cpu')
     new_state_dict = {k.replace('module.', ''): v for k, v in state_dict.items()}
     model.load_state_dict(new_state_dict)
-    return model
+    return model.to(DEVICE)
 
 def main():
     # Load the model
@@ -68,7 +66,31 @@ def main():
     fasta_path = input("Enter the path to the FASTA file: ")
     fasta_records = read_fasta(fasta_path)
     for record in fasta_records:
-        prediction = predict(record, model)
+        width = len(record.seq)
+        height = len(record.seq)
+
+        prediction_matrix = predict(record, model)
+
+        # Cut off the prediction matrix to the size of the sequence
+        prediction_matrix = prediction_matrix[:width, :height]
+
+        # Plot the prediction
+        plt.imshow(prediction_matrix, cmap='viridis', interpolation='nearest')
+
+        # Color represents the predicted distance in Angstroms (Å)
+        plt.colorbar(label='Predicted Distance (Å)')
+        plt.title(f"Prediction for {record.id}")
+
+        # Set axis length
+        # plt.xlim(0, width)
+        # plt.ylim(0, height)
+
+        plt.show()
+
+        # Save the plot
+        os.makedirs("plots", exist_ok=True)
+        plt.savefig(f"plots/{record.id}_prediction.png")
+        plt.close()
 
 if __name__ == "__main__":
     main()

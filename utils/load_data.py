@@ -159,6 +159,7 @@ def load_cached_data(DEVICE):
     if os.path.exists(CACHED_ONE_HOT):
         print("Loading cached one-hot encoded data...")
         one_hot_encoded_data = torch.load(CACHED_ONE_HOT, map_location=DEVICE)
+        num_unique_amino_acids = one_hot_encoded_data[0][0].shape[0] // torch.sum(one_hot_encoded_data[0][0] == 1).item()
     else:
         one_hot_encoded_data, num_unique_amino_acids = one_hot_encode(data, DEVICE)
         os.makedirs(CACHE_DIR, exist_ok=True)

@@ -1,0 +1,19 @@
+Statistics for all losses:
+Average loss: 5.3772
+Lowest loss: 2.1376
+Highest loss: 25.0689
+Standard deviation of the losses: 2.6741
+Percentage of losses within 2 angstroms: 0.00%
+Percentage of losses within 5 angstroms: 53.48%
+Percentage of losses within 8 angstroms: 82.45%
+Percentage of losses within 10 angstroms: 95.54%
+
+Statistics for losses where the mean distance is less than 30:
+Average loss: 5.0747
+Lowest loss: 2.1376
+Highest loss: 11.2753
+Standard deviation of the losses: 2.1183
+Percentage of losses within 2 angstroms: 0.00%
+Percentage of losses within 5 angstroms: 55.65%
+Percentage of losses within 8 angstroms: 85.80%
+Percentage of losses within 10 angstroms: 99.13%
