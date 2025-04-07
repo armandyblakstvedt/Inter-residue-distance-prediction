@@ -177,3 +177,5 @@ data/*
 cache/*
 utils/cache/*
 unzippa/*
+
+predictions/
