@@ -1,6 +1,6 @@
-name: inter_residue_distance_prediction
+name: bioinf
 
-channel: 
+channel:
   - conda-forge
   - defaults
 

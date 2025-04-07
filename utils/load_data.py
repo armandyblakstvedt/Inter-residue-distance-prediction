@@ -13,8 +13,10 @@ import torch
 warnings.simplefilter('ignore', PDBConstructionWarning)
 parser = PDBParser()
 
-CACHE_FILE = 'cache/sequences.pkl'
-
+CACHE_DIR = "cache"
+CACHE_FILE = os.path.join(CACHE_DIR, "sequences.pkl")
+CACHED_ONE_HOT = os.path.join(CACHE_DIR, "one_hot_encoded_data.pt")
+CACHED_UNIQUE_AMINO_ACIDS = os.path.join(CACHE_DIR, "unique_amino_acids.pkl")
 
 def process_file(pdb_file):
     structure = parser.get_structure("protein", pdb_file)
@@ -69,6 +71,55 @@ def load_data():
                 sequences.append(result)
     return sequences
 
+def get_unique_amino_acids(data, DEVICE="cpu"):
+    if os.path.exists(CACHED_UNIQUE_AMINO_ACIDS):
+        print("Loading cached amino acids...")
+        amino_acid_data = torch.load(CACHED_UNIQUE_AMINO_ACIDS, map_location=DEVICE)
+        return amino_acid_data.get("aa_to_index"), amino_acid_data.get("num_unique_amino_acids")
+
+    # Extract all the unique amino acids in the dataset
+    all_amino_acids = set()
+    for seq, _, _ in data:
+        for aa in seq:
+            all_amino_acids.add(aa)
+    all_amino_acids = sorted(list(all_amino_acids))
+    aa_to_index = {aa: idx for idx, aa in enumerate(all_amino_acids)}
+    num_unique_amino_acids = len(all_amino_acids)
+
+    return aa_to_index, num_unique_amino_acids
+
+def one_hot_encode(data, DEVICE="cpu"):
+    """
+    One-hot encode the protein sequences and convert distance matrices to tensors.
+    Args:
+        data: List of tuples, where each tuple contains:
+            - sequence: List of amino acids (strings).
+            - padded_dm (Optional, required for training): Numpy array of the distance matrix.
+            - n_actual (Optional, required for training): Number of actual residues in the sequence.
+        DEVICE: The device to which the tensors will be moved (CPU or GPU).
+    Returns:
+        one_hot_encoded_data: List of tuples, where each tuple contains:
+            - one_hot: Tensor of shape (400 * num_unique_amino_acids).
+            - padded_dm: Tensor of shape (400, 400).
+            - n_actual: Tensor of shape (1,).
+        num_unique_amino_acids: The number of unique amino acids in the dataset.
+    """
+    aa_to_index, num_unique_amino_acids = get_unique_amino_acids(data, DEVICE)
+
+    one_hot_encoded_data = []
+    for protein_sequence, distance_matrix, valid_entries in tqdm(
+            data, desc='One-hot encoding', unit='protein'):
+        one_hot = torch.zeros(len(protein_sequence), num_unique_amino_acids, dtype=torch.float32, device=DEVICE)
+        for i, aa in enumerate(protein_sequence):
+            one_hot[i, aa_to_index[aa]] = 1
+        one_hot = one_hot.view(-1)
+        one_hot_encoded_data.append((
+            one_hot,
+            torch.tensor(distance_matrix, dtype=torch.float32, device=DEVICE),
+            torch.tensor(valid_entries, dtype=torch.float32, device=DEVICE)
+        ))
+
+    return one_hot_encoded_data, num_unique_amino_acids
 
 def load_cached_data(DEVICE):
     if os.path.exists(CACHE_FILE):
@@ -82,36 +133,14 @@ def load_cached_data(DEVICE):
         with open(CACHE_FILE, 'wb') as f:
             pickle.dump(data, f)
 
-    # Extract all the unique amino acids in the dataset
-    all_amino_acids = set()
-    for seq, _, _ in data:
-        for aa in seq:
-            all_amino_acids.add(aa)
-    all_amino_acids = sorted(list(all_amino_acids))
-    aa_to_index = {aa: idx for idx, aa in enumerate(all_amino_acids)}
-    num_unique_amino_acids = len(all_amino_acids)
-
     # Check for cached one-hot encoded data
-    cache_dir = "cache"
-    cache_file = os.path.join(cache_dir, "one_hot_encoded_data.pt")
-    if os.path.exists(cache_file):
+    if os.path.exists(CACHED_ONE_HOT):
         print("Loading cached one-hot encoded data...")
-        one_hot_encoded_data = torch.load(cache_file, map_location=DEVICE)
+        one_hot_encoded_data = torch.load(CACHED_ONE_HOT, map_location=DEVICE)
     else:
-        one_hot_encoded_data = []
-        for protein_sequence, distance_matrix, valid_entries in tqdm(
-                data, desc='One-hot encoding', unit='protein'):
-            one_hot = torch.zeros(len(protein_sequence), num_unique_amino_acids, dtype=torch.float32, device=DEVICE)
-            for i, aa in enumerate(protein_sequence):
-                one_hot[i, aa_to_index[aa]] = 1
-            one_hot = one_hot.view(-1)
-            one_hot_encoded_data.append((
-                one_hot,
-                torch.tensor(distance_matrix, dtype=torch.float32, device=DEVICE),
-                torch.tensor(valid_entries, dtype=torch.float32, device=DEVICE)
-            ))
-        os.makedirs(cache_dir, exist_ok=True)
-        torch.save(one_hot_encoded_data, cache_file)
+        one_hot_encoded_data, num_unique_amino_acids = one_hot_encode(data, DEVICE)
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        torch.save(one_hot_encoded_data, CACHED_ONE_HOT)
         print("One-hot encoded data cached.")
 
     return one_hot_encoded_data, num_unique_amino_acids
