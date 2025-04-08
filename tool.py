@@ -83,17 +83,18 @@ def main():
 
         # Save the plot
         os.makedirs("plots", exist_ok=True)
-        plt.savefig(f"plots/{record.id}_prediction.png")
-        print(f"Plot saved for {record.id} at path 'plots/{record.id}_prediction.png'")
+        filename_prefix = record.id.replace('|', '-').replace(' ', '-') # Replace slashes and spaces in the filename
+        plt.savefig(f"plots/{filename_prefix}_prediction.png")
+        print(f"Plot saved for {record.id} at path 'plots/{filename_prefix}_prediction.png'")
 
         plt.show()
         plt.close()
 
         # Save the prediction matrix to a pickle file
         os.makedirs("predictions", exist_ok=True)
-        with open(f"predictions/{record.id}_prediction.pkl", "wb") as f:
+        with open(f"predictions/{filename_prefix}_prediction.pkl", "wb") as f:
             torch.save(prediction_matrix, f)
-        print(f"Prediction saved for {record.id} at path 'predictions/{record.id}_prediction.pkl'")
+        print(f"Prediction saved for {record.id} at path 'predictions/{filename_prefix}_prediction.pkl'")
 
 if __name__ == "__main__":
     main()
