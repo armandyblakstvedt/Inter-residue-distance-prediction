@@ -62,7 +62,7 @@ def main():
     # Load the model
     model = load_model("model.pth")
 
-    # Input with autocomplete for file path
+    # Input for file path
     fasta_path = input("Enter the path to the FASTA file: ")
     fasta_records = read_fasta(fasta_path)
     for record in fasta_records:
