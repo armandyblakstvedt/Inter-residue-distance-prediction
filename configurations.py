@@ -4,7 +4,7 @@ import torch
 DEVICE = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
 
 # Training parameters
-EPOCHS = 10
+EPOCHS = 235
 NUMBER_OF_BATCHES_PER_EPOCH = 1000
 BATCH_SIZE = 8
 LEARNING_RATE = 0.001
