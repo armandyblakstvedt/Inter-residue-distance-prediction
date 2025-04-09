@@ -12,6 +12,7 @@ The code is written in Python and requires the following libraries:
 - [matplotlib](https://matplotlib.org/)
 - [pandas](https://pandas.pydata.org/)
 - [biopython](https://biopython.org/)
+- [tqdm](https://tqdm.github.io/)
 
 You can set up this environment using anaconda by running the following commands:
 
