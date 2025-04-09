@@ -25,7 +25,7 @@ Link to the filteres dataset on PDB: [Protein Data Bank](https://www.rcsb.org/se
 
 ## Data
 
-TO get the data, run the following command:
+To get the data, run the following command:
 
 ```bash
 ./batch_download.sh -f protein-ids.txt -o ./data -p
@@ -45,3 +45,22 @@ The following filters are applied to the dataset:
 - Polymer entity type: Protein
 - Refinement Resolution: 1.5 to 2
 - Polymer length 300 - 400
+
+## Run the tool
+
+To run the tool, run the following command in the root folder of the project:
+
+```bash
+python tool.py
+```
+
+Then when you are prompted for a path to a FASTA file, enter the path to the FASTA file like this:
+
+```bash
+faste/filename.fasta
+```
+
+To train the model, run the following command from the root folder of the project:
+```bash
+python main.py
+```
