@@ -14,7 +14,7 @@ The code is written in Python and requires the following libraries:
 - [biopython](https://biopython.org/)
 - [tqdm](https://tqdm.github.io/)
 
-You can set up this environment using anaconda by running the following commands:
+You can set up this environment using Conda by running the following commands:
 
 ```bash
 conda env create -f environment.yml
