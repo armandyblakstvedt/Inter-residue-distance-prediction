@@ -174,7 +174,8 @@ cython_debug/
 .pypirc
 
 data/*
-cache/*
+cache/one_hot_encoded_data.pt
+cache/sequences.pkl
 utils/cache/*
 unzippa/*
 
